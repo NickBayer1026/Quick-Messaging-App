@@ -1,0 +1,777 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --gradient-light: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  --gradient-dark: linear-gradient(135deg, #0f1635, #590f0f, #805e16);
+  --card-bg-light: rgba(255, 255, 255, 0.1);
+  --card-bg-dark: rgba(0, 0, 0, 0.2);
+  --text-color-light: #fff;
+  --text-color-dark: #e1e1e1;
+  --accent-color-light: #fdbb2d;
+  --accent-color-dark: #b38520;
+  --transition-speed: 0.3s;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity var(--transition-speed) ease;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-text {
+  color: var(--text-color-light);
+  margin-top: 20px;
+  font-size: 1.2em;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+}
+
+.loader svg {
+  width: 100%;
+  height: 100%;
+  /* keep SVG static — no rotation */
+  animation: none;
+}
+
+.loader img {
+  width: 100%;
+  height: 100%;
+  /* static image: disable rotation */
+  animation: none;
+}
+
+.loader circle {
+  fill: none;
+  stroke: var(--accent-color-light);
+  stroke-width: 4;
+  stroke-dasharray: 125.6;
+  stroke-dashoffset: 125.6;
+  transform-origin: 50px 50px;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dashoffset: 125.6;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -125.6;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--gradient-light);
+  overflow: hidden;
+  color: var(--text-color-light);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+  background: var(--gradient-dark);
+  color: var(--text-color-dark);
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* === CARD BASE === */
+.card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 420px;
+  min-height: 400px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+
+  background: var(--card-bg-light);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 40px;
+  color: var(--text-color-light);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode .card {
+  background: var(--card-bg-dark);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-color-dark);
+}
+
+.card.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+/* === MAKE DASHBOARD CARD FILL WINDOW === */
+#dashboard-card {
+  position: relative;
+  transform: none;
+  top: auto;
+  left: auto;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1100px;
+  height: calc(100vh - 40px);
+  padding: 0;
+  overflow: hidden;
+  display: none;
+  justify-content: stretch;
+  align-items: stretch;
+  transition: none;
+  opacity: 1;
+}
+
+#dashboard-card.active {
+  display: flex;
+}
+
+#dashboard-card.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* === FORM ELEMENTS === */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+input {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1em;
+  outline: none;
+  transition: background 0.3s ease;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+input:focus {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* === DASHBOARD === */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sidebar */
+.chat-sidebar {
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  overflow-y: auto;
+  padding: 25px;
+}
+
+.chat-sidebar h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.search-bar {
+  margin: 10px 0 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.chat-list {
+  list-style: none;
+  margin-bottom: 20px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-20px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-list.visible {
+  max-height: 300px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chat-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.chat-list.visible .chat-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.chat-list.visible .chat-item:nth-child(1) { transition-delay: 0.1s; }
+.chat-list.visible .chat-item:nth-child(2) { transition-delay: 0.15s; }
+.chat-list.visible .chat-item:nth-child(3) { transition-delay: 0.2s; }
+.chat-list.visible .chat-item:nth-child(4) { transition-delay: 0.25s; }
+
+.chat-item:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.chat-item.active {
+  background: rgba(255,255,255,0.25);
+  font-weight: 600;
+}
+
+/* Messages column */
+.chat-main {
+  text-align: left;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 25px;
+}
+
+.chat-main h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.messages {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  scroll-behavior: smooth;
+}
+
+.message-item {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+border-radius: 8px;
+background: rgba(255, 255, 255, 0.08);
+word-wrap: break-word;
+animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.message-item .sender {
+font-weight: 600;
+color: #fdbb2d;
+}
+
+.message-item.self {
+float: right;
+display: inline-block;
+clear: both;
+text-align: right;
+background: rgba(253, 187, 45, 0.3); /* Brighter golden background */
+border: 1px solid rgba(253, 187, 45, 0.5); /* Golden border */
+max-width: 75%;
+width: fit-content;
+word-wrap: break-word;
+box-shadow: 0 2px 8px rgba(253, 187, 45, 0.2); /* Subtle glow */
+}
+
+.message-item.self .sender {
+color: #fdbb2d; /* Changed to match the theme */
+}
+
+.message-input {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input input {
+  flex-grow: 1;
+  padding: 12px 15px;
+}
+
+.sidebar-nav {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-btn {
+  width: 100%;
+}
+
+#settings-btn {
+  background: rgba(253, 187, 45, 0.4);
+}
+
+#settings-btn:hover {
+  background: rgba(253, 187, 45, 0.6);
+}
+
+#logout-btn {
+  background: rgba(178, 31, 31, 0.4);
+}
+
+#logout-btn:hover {
+  background: rgba(178, 31, 31, 0.6);
+}
+
+/* Settings Styles */
+.settings-main {
+  flex: 2;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: calc(100% - 280px);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  z-index: 900; /* ensure settings sits above blurred content */
+}
+
+/* Dark mode: use a stronger tint so the settings panel remains readable */
+body.dark-mode .settings-main {
+  background: rgba(0, 0, 0, 0.54);
+  backdrop-filter: blur(8px);
+}
+
+/* Ensure all text inside the settings panel uses theme-aware colors */
+.settings-main {
+  color: var(--text-color-light);
+}
+
+body.dark-mode .settings-main {
+  color: var(--text-color-dark);
+}
+
+.settings-main.hidden {
+  opacity: 0;
+  transform: translateX(20px);
+  pointer-events: none;
+}
+
+.settings-content {
+  /* Make inner content less transparent for legibility */
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 20px;
+  transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+/* inherit text color for inner elements and labels */
+.settings-content,
+.settings-content * {
+  color: inherit;
+}
+
+.settings-section {
+  margin-bottom: 30px;
+}
+
+.settings-section h3 {
+  margin-bottom: 15px;
+  color: var(--accent-color-light);
+}
+
+body.dark-mode .settings-section h3 {
+  color: var(--accent-color-dark);
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  transition: all var(--transition-speed) ease;
+  box-shadow: 0 6px 18px rgba(6, 12, 20, 0.08);
+}
+
+/* Center the About / profile block: stack label, avatar and name */
+.profile-section {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.profile-section .app-maker {
+  margin: 0;
+  font-weight: 600;
+}
+
+.profile-section .profile-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.profile-section .profile-link span {
+  display: block;
+}
+
+/* Style labels inside setting items */
+.setting-item label {
+  font-weight: 500;
+  color: var(--accent-color-light);
+  opacity: 0.9;
+  transition: color var(--transition-speed) ease;
+  letter-spacing: 0.2px;
+}
+
+body.dark-mode .settings-content {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .setting-item {
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .setting-item label {
+  color: var(--accent-color-dark);
+  opacity: 0.95;
+}
+
+body.settings-open .chat-main,
+body.settings-open .chat-sidebar > :not(.sidebar-nav) {
+  filter: blur(6px) brightness(0.85);
+  transition: filter var(--transition-speed) ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+body.settings-open .sidebar-nav {
+  pointer-events: auto;
+  user-select: auto;
+  position: relative;
+  z-index: 910;
+  filter: none;
+}
+
+@media (max-width: 899px) {
+  /* On small screens, reduce blur a bit to avoid performance issues */
+  body.settings-open .chat-main,
+  body.settings-open .chat-sidebar > :not(.sidebar-nav) {
+    filter: blur(4px) brightness(0.88);
+  }
+  .settings-main {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(6px);
+    z-index: 1002; /* above sidebar-nav */
+    border-radius: 0;
+  }
+
+  body.dark-mode .settings-main {
+    background: rgba(8,8,10,0.96);
+  }
+
+  .settings-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #333;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 10px 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .settings-close:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  body.dark-mode .settings-close { 
+    color: #fff; 
+  }
+  
+  body.dark-mode .settings-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Switch Toggle */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(128, 128, 128, 0.35);
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: rgb(100, 100, 100);
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2ecc71;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Profile Link */
+.profile-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-decoration: none;
+  color: var(--text-color-light);
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.3s ease, color var(--transition-speed) ease;
+}
+
+/* Ensure the "App Maker:" label and the profile name use dark text in light mode
+   and light text in dark mode. These selectors are specific to override the
+   parent .profile-link color when needed. */
+.profile-link span,
+.app-maker {
+  color: #222; /* dark in light theme for contrast */
+  transition: color var(--transition-speed) ease;
+}
+
+body.dark-mode .profile-link span,
+body.dark-mode .app-maker {
+  color: #fff; /* light text on dark theme */
+}
+
+.profile-image {
+  /* Fixed circular avatar container — stays the same size regardless of content */
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  flex: 0 0 60px; /* prevent flex children from shrinking/growing */
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  border: 2px solid var(--accent-color-light);
+  background-color: rgba(0,0,0,0.06); /* subtle fallback if image missing */
+}
+
+.profile-image img {
+  /* keep the image filling the circle without distorting; cropped as needed */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Dark-mode overrides for profile link and borders */
+body.dark-mode .profile-link { color: var(--text-color-dark); }
+body.dark-mode .profile-image { border-color: var(--accent-color-dark); }
+
+/* Slider / toggle color adjustments in dark mode */
+body.dark-mode .slider { 
+  background-color: rgba(128, 128, 128, 0.25);
+}
+body.dark-mode input:checked + .slider {
+  background-color: #27ae60;
+}
+body.dark-mode .slider:before { 
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* === DESKTOP LAYOUT === */
+@media (min-width: 900px) {
+  .card:not(#dashboard-card) {
+    max-width: 900px;
+    min-height: 600px;
+    overflow: hidden;
+  }
+
+  #dashboard-card {
+    height: calc(100vh - 60px);
+  }
+
+  .dashboard-container {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .chat-sidebar {
+    flex: 1;
+    max-width: 280px;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .chat-main {
+    flex: 2;
+    padding-left: 25px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .messages {
+    flex-grow: 1;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .message-input {
+    margin-top: auto;
+  }
+}

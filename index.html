@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Messaging App</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="loader">
+      <img src="assets/loading.svg" alt="Loading" aria-hidden="true" />
+    </div>
+    <p class="loading-text">Logging out...</p>
+  </div>
+
+  <div class="container">
+    <!-- Login Card -->
+    <div class="card active" id="login-card">
+      <h2>Login</h2>
+      <form id="login-form">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+        <div class="auth-providers">
+          <button type="button" id="google-login" class="provider-btn">
+            Continue with Google
+          </button>
+        </div>
+        <div id="login-error" class="error-message"></div>
+      </form>
+      <p>Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
+      <p><a href="#" id="forgot-password">Forgot Password?</a></p>
+    </div>
+
+    <!-- Signup Card -->
+    <div class="card hidden" id="signup-card">
+      <h2>Sign Up</h2>
+      <form id="signup-form">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <input type="password" name="confirmPassword" placeholder="Confirm Password" required />
+        <div class="password-requirements">
+          <p>Password must contain:</p>
+          <ul>
+            <li id="length-check">At least 8 characters</li>
+            <li id="uppercase-check">One uppercase letter</li>
+            <li id="number-check">One number</li>
+            <li id="special-check">One special character</li>
+          </ul>
+        </div>
+        <button type="submit">Sign Up</button>
+        <div id="signup-error" class="error-message"></div>
+      </form>
+      <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+    </div>
+
+    <!-- Dashboard Card -->
+    <div class="card hidden" id="dashboard-card">
+      <div class="dashboard-container">
+        <!-- Sidebar (Chat List) -->
+        <aside class="chat-sidebar">
+          <div class="user-profile">
+            <div class="current-user">
+              <div class="profile-image small">
+                <img id="user-avatar" src="assets/default-avatar.png" alt="Your avatar">
+              </div>
+              <div class="user-info">
+                <span id="current-username">Not logged in</span>
+                <span class="online-status">Online</span>
+              </div>
+            </div>
+          </div>
+          <h2>Chats</h2>
+          <div class="search-bar">
+            <input id="chat-search" type="search" placeholder="Search chats..." />
+          </div>
+          <ul class="chat-list">
+            <!-- Dynamic chat list will be populated here -->
+          </ul>
+          <div class="online-users">
+            <h3>Online Users</h3>
+            <ul id="online-users-list">
+              <!-- Dynamic online users list will be populated here -->
+            </ul>
+          </div>
+          <div class="sidebar-nav">
+            <button id="settings-btn" class="nav-btn">Settings</button>
+            <button id="logout-btn">Logout</button>
+          </div>
+        </aside>
+
+        <!-- Chat Main Area -->
+        <main class="chat-main">
+          <div class="messages">
+            <div class="message-item">
+              <span class="sender">Sherlen:</span> Hi et, Studio77 ta Friday?
+            </div>
+            <div class="message-item">
+              <span class="sender">William:</span> Sige ba, let's go?
+            </div>
+            <div class="message-item self">
+              <span class="sender">You:</span> Sorry guys pass lang sa ko rn.
+            </div>
+          </div>
+
+          <div class="message-input">
+            <input type="text" placeholder="Type your message..." />
+            <button>Send</button>
+          </div>
+        </main>
+
+        <!-- Settings Area -->
+        <div class="settings-main hidden">
+          <div class="settings-header">
+            <h2>Settings</h2>
+          </div>
+          <div class="settings-content">
+            <div class="settings-section">
+              <h3>Appearance</h3>
+              <div class="setting-item">
+                <label for="dark-mode">Dark Mode</label>
+                <label class="switch">
+                  <input type="checkbox" id="dark-mode">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Notifications</h3>
+              <div class="setting-item">
+                <label for="browser-notifications">Browser Notifications</label>
+                <label class="switch">
+                  <input type="checkbox" id="browser-notifications">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>About</h3>
+              <div class="setting-item profile-section">
+                <p class="app-maker">App Maker:</p>
+                <a href="https://www.facebook.com/sherlen.taocjabian?mibextid=wwXIfr&rdid=reIjdwzbhrJUJgTu&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CqwoLKzeZ%2F%3Fmibextid%3DwwXIfr#" target="_blank" class="profile-link">
+                  <div class="profile-image">
+                      <img src="assets/fbprofile.png" alt="Sherlen Taocjabian">
+                    </div>
+                  <span>Sherlen Taocjabian</span>
+                </a>
+              </div>
+            </div>
+            <button id="settings-close" class="settings-close" aria-label="Close settings">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
