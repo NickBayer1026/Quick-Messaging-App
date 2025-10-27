@@ -3,8 +3,50 @@ const SUPABASE_URL = 'https://zmljydpxsbixyihrbxko.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptbGp5ZHB4c2JpeHlpaHJieGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1NDYyMTMsImV4cCI6MjA3NzEyMjIxM30.9l9G7UqnHTUKfU69son9LcPA220TR4ABZi1L-IvmkWg';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    updateConnectionStatus('syncing', 'Signing out...');
+    logOperation('Auth', 'Starting sign out process');
+// Monitor Supabase connection and operations
+    if (error) {
+      logOperation('Error', 'Sign out failed: ' + error.message);
+      updateConnectionStatus('error', 'Sign out failed');
+      throw error;
+    }
+let isConnected = false;
+
+function updateConnectionStatus(status, message) {
+  const statusElement = document.getElementById('connection-status');
+  const statusText = statusElement.querySelector('.status-text');
+  
+  statusElement.className = 'connection-status ' + status;
+  statusText.textContent = message;
+}
+
+    logOperation('Success', 'User signed out successfully');
+    updateConnectionStatus('connected', 'Signed out');
+function logOperation(operation, details) {
+  const timestamp = new Date().toISOString();
+    logOperation('Error', 'Sign out failed: ' + error.message);
+    updateConnectionStatus('error', 'Sign out failed');
+  console.log(`[${timestamp}] ${operation}:`, details);
+  lastActivity = Date.now();
+}
+
+// Monitor realtime connection
+supabase.channel('system')
+  .on('system', { event: '*' }, (status) => {
+    isConnected = status === 'CONNECTED';
+    updateConnectionStatus(
+      status === 'CONNECTED' ? 'connected' : 'error',
+      status === 'CONNECTED' ? 'Connected' : 'Connection lost'
+    );
+    logOperation('Realtime Status', status);
+  })
+  .subscribe();
+
 // Authentication functions
 async function signUpUser(email, password, username) {
+  updateConnectionStatus('syncing', 'Creating account...');
+  logOperation('Auth', 'Starting sign up process');
   try {
     const { user, error } = await supabase.auth.signUp({
       email,
@@ -16,7 +58,11 @@ async function signUpUser(email, password, username) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      logOperation('Error', 'Sign up failed: ' + error.message);
+      updateConnectionStatus('error', 'Sign up failed');
+      throw error;
+    }
 
     // Create a profile for the user
     const { error: profileError } = await supabase
@@ -30,7 +76,14 @@ async function signUpUser(email, password, username) {
         }
       ]);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      logOperation('Error', 'Profile creation failed: ' + profileError.message);
+      updateConnectionStatus('error', 'Profile creation failed');
+      throw profileError;
+    }
+
+    logOperation('Success', 'User signed up successfully');
+    updateConnectionStatus('connected', 'Signed in');
     return { user, error: null };
   } catch (error) {
     console.error('Error signing up:', error.message);
@@ -39,9 +92,15 @@ async function signUpUser(email, password, username) {
 }
 
 async function signInUser(email, password) {
+  updateConnectionStatus('syncing', 'Signing in...');
+  logOperation('Auth', 'Starting sign in process');
   try {
     const { user, error } = await supabase.auth.signIn({ email, password });
-    if (error) throw error;
+    if (error) {
+      logOperation('Error', 'Sign in failed: ' + error.message);
+      updateConnectionStatus('error', 'Sign in failed');
+      throw error;
+    }
 
     // Update online status
     await supabase
@@ -49,6 +108,8 @@ async function signInUser(email, password) {
       .update({ online: true })
       .match({ id: user.id });
 
+    logOperation('Success', 'User signed in successfully');
+    updateConnectionStatus('connected', 'Signed in');
     return { user, error: null };
   } catch (error) {
     console.error('Error signing in:', error.message);
@@ -88,30 +149,72 @@ function subscribeToMessages() {
 
 // Load messages from Supabase with user info
 async function loadMessages() {
-  const { data, error } = await supabase
-    .from('messages')
-    .select(`
-      *,
-      profiles:sender_id (username, avatar_url)
-    `)
-    .order('created_at', { ascending: true })
-    .limit(100);
-  
-  if (error) {
+  updateConnectionStatus('syncing', 'Loading messages...');
+  try {
+    logOperation('Loading messages', 'Started fetching messages');
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*, profiles:sender_id (username, avatar_url)')
+      .order('created_at', { ascending: true })
+      .limit(100);
+    
+    if (error) {
+      logOperation('Error', 'Failed to load messages: ' + error.message);
+      updateConnectionStatus('error', 'Load failed');
+      throw error;
+    }
+
+    const messagesContainer = document.querySelector('.messages');
+    messagesContainer.innerHTML = ''; // Clear existing messages
+
+    const currentUser = supabase.auth.user();
+    let lastDate = null;
+
+    data.forEach(message => {
+      // Add date separator if it's a new day
+      const messageDate = new Date(message.created_at).toLocaleDateString();
+      if (messageDate !== lastDate) {
+        const dateSeparator = document.createElement('div');
+        dateSeparator.className = 'date-separator';
+        dateSeparator.textContent = messageDate;
+        messagesContainer.appendChild(dateSeparator);
+        lastDate = messageDate;
+      }
+
+      // Support both old and new message formats
+      const messageData = {
+        ...message,
+        sender: message.sender || (message.profiles?.username || 'Unknown User'),
+        sender_id: message.sender_id || null,
+        avatar_url: message.profiles?.avatar_url || null
+      };
+
+      appendMessage(messageData, currentUser?.id);
+    });
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    updateConnectionStatus('connected', 'Connected');
+    logOperation('Loading messages', `Loaded ${data.length} messages`);
+
+    // Subscribe to new messages if not already subscribed
+    if (!window.messageSubscription) {
+      logOperation('Subscribing', 'Setting up real-time message subscription');
+      window.messageSubscription = supabase
+        .from('messages')
+        .on('INSERT', payload => {
+          appendMessage(payload.new, currentUser?.id);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          logOperation('Realtime', 'Received new message');
+        })
+        .subscribe();
+    }
+  } catch (error) {
+    logOperation('Error', 'Failed to load messages: ' + error.message);
+    updateConnectionStatus('error', 'Load failed');
     console.error('Error loading messages:', error);
-    return;
+    const messagesContainer = document.querySelector('.messages');
+    messagesContainer.innerHTML = '<div class="error-message">Failed to load messages. Please refresh.</div>';
   }
-
-  const messagesContainer = document.querySelector('.messages');
-  messagesContainer.innerHTML = ''; // Clear existing messages
-
-  const currentUser = supabase.auth.user();
-
-  data.forEach(message => {
-    appendMessage(message, currentUser?.id);
-  });
-
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Append a single message to the chat
@@ -120,35 +223,69 @@ function appendMessage(message, currentUserId = null) {
   const newMsg = document.createElement('div');
   newMsg.classList.add('message-item');
   
-  const isSelf = currentUserId && message.sender_id === currentUserId;
+  const isSelf = currentUserId && 
+    (message.sender_id === currentUserId || message.sender === 'You');
   if (isSelf) newMsg.classList.add('self');
 
-  const senderName = message.profiles?.username || 'Unknown User';
-  const messageTime = new Date(message.created_at).toLocaleTimeString();
+  // Handle both old and new message formats
+  const senderName = isSelf ? 'You' : (message.sender || message.profiles?.username || 'Unknown User');
+  const messageTime = new Date(message.created_at).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
+  // Create message element with avatar support
+  const avatar = message.avatar_url || 'assets/default-avatar.png';
+  
   newMsg.innerHTML = `
-    <div class="message-header">
-      <span class="sender">${senderName}</span>
-      <span class="timestamp">${messageTime}</span>
+    <div class="message-container">
+      ${!isSelf ? `
+        <div class="message-avatar">
+          <img src="${avatar}" alt="${senderName}" />
+        </div>
+      ` : ''}
+      <div class="message-content">
+        <div class="message-header">
+          <span class="sender">${senderName}</span>
+          <span class="timestamp">${messageTime}</span>
+        </div>
+        <div class="message-text">${message.content}</div>
+      </div>
     </div>
-    <div class="message-content">${message.content}</div>
   `;
   
   messagesContainer.appendChild(newMsg);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Save message to Supabase
-async function sendMessageToDb(sender, text) {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([{ sender, content: text }]);
-  
-  if (error) {
-    console.error('Error sending message:', error);
+async function sendMessageToDb(text) {
+  updateConnectionStatus('syncing', 'Sending message...');
+  const user = supabase.auth.user();
+  if (!user) {
+    logOperation('Error', 'User not logged in');
+    updateConnectionStatus('error', 'Not logged in');
+    console.error('User must be logged in to send messages');
     return false;
   }
-  return true;
+
+  const { data, error } = await supabase
+    .from('messages')
+    .insert([{ 
+      content: text,
+      sender: user.user_metadata.username || user.email, // Compatibility with existing messages
+      sender_id: user.id // New field linking to profiles
+    }]);
+  
+    if (error) {
+      logOperation('Error', 'Failed to send message: ' + error.message);
+      updateConnectionStatus('error', 'Send failed');
+      console.error('Error sending message:', error);
+      return false;
+    }
+  
+    logOperation('Success', 'Message sent');
+    updateConnectionStatus('connected', 'Online');
+    return true;
 }
 
 // Track online users
@@ -165,16 +302,19 @@ async function initializeOnlineUsers() {
 }
 
 async function updateOnlineUsersList() {
+  logOperation('Users', 'Fetching online users');
   const { data: onlineUsers, error } = await supabase
     .from('profiles')
     .select('username, avatar_url')
     .eq('online', true);
 
   if (error) {
+    logOperation('Error', 'Failed to fetch online users: ' + error.message);
     console.error('Error fetching online users:', error);
     return;
   }
 
+  logOperation('Success', `Found ${onlineUsers.length} online users`);
   const onlineList = document.getElementById('online-users-list');
   onlineList.innerHTML = '';
 
@@ -284,21 +424,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const input = dashboardCard.querySelector('.message-input input');
     const text = input.value.trim();
     if (text) {
-      // Save to Supabase first
-      const success = await sendMessageToDb('You', text);
-      if (!success) {
-        console.error('Failed to save message');
-        return;
-      }
+      // Show sending state
+      input.disabled = true;
+      const sendButton = dashboardCard.querySelector('.message-input button');
+      const originalText = sendButton.textContent;
+      sendButton.textContent = 'Sending...';
 
-      // Update UI
-      const messages = dashboardCard.querySelector('.messages');
-      const newMsg = document.createElement('div');
-      newMsg.classList.add('message-item', 'self');
-      newMsg.innerHTML = `<span class="sender">You:</span> ${text}`;
-      messages.appendChild(newMsg);
-      input.value = '';
-      messages.scrollTop = messages.scrollHeight;
+      try {
+        // Save to Supabase first
+        const success = await sendMessageToDb(text);
+        if (!success) {
+          throw new Error('Failed to save message');
+        }
+
+        // Clear input on success
+        input.value = '';
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to send message. Please try again.');
+      } finally {
+        // Reset UI state
+        input.disabled = false;
+        sendButton.textContent = originalText;
+        input.focus();
+      }
     }
   };
 
